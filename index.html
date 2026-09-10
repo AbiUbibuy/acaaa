@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For You ❤️</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 15px;
+            /* REVISI PENTING: min-height dan flex dibuang supaya halaman 4 bisa discroll jika contentnya panjang */
+            background-color: #ffe6eb;
+            font-family: 'Comic Sans MS', 'Comic Sans', 'Chalkboard SE', cursive, sans-serif;
+            /* REVISI PENTING: overflow diganti biar gak kepotong. Yang di hidden cuma X-nya aja (horizontal) */
+            overflow-x: hidden; 
+            overflow-y: auto; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Container utamanya */
+        #app-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            text-align: center;
+            background: white;
+            padding: 25px 15px;
+            border-radius: 12px;
+            border: 4px solid black;
+            box-shadow: 6px 6px 0px black;
+            max-width: 400px; /* Lebar maksimal disesuaikan untuk HP */
+            width: 100%;
+            position: relative;
+            z-index: 10;
+        }
+
+        .pop-up {
+            animation: popUpAnim 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            transform: scale(0);
+        }
+
+        @keyframes popUpAnim { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #000;
+            text-shadow: 2px 2px 0px #ffb3cc, -1px -1px 0px #ffb3cc;
+        }
+
+        .btn {
+            color: black;
+            border: 3px solid black;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: inherit;
+            box-shadow: 4px 4px 0px black;
+            transition: all 0.2s ease-in-out; 
+            margin: 8px;
+        }
+
+        .btn:active {
+            transform: translate(4px, 4px) !important;
+            box-shadow: 0px 0px 0px black !important;
+        }
+
+        #btnProceed, #btnProceed2, #btnProceedFirst { font-size: 16px; padding: 10px 20px; }
+        #btnProceed, #btnProceed2 { background-color: #00e676; }
+        #btnProceedFirst { background-color: #ff66b3; }
+        
+        #btnYes { background-color: #00e676; font-size: 18px; padding: 10px 25px; z-index: 100; }
+        #btnNo { background-color: #ff3d00; font-size: 18px; padding: 10px 25px; z-index: 101; }
+
+        .button-group { position: relative; display: flex; justify-content: center; align-items: center; min-height: 80px; width: 100%; }
+        #reaction-container { display: none; text-align: center; margin-bottom: 15px; }
+
+        .cat-img {
+            width: 150px;
+            height: 150px; 
+            object-fit: cover;
+            border-radius: 8px;
+            border: 4px solid black;
+            box-shadow: 4px 4px 0px black;
+            margin: 0 auto;
+        }
+
+        /* REVISI: Galeri Foto Disesuaikan ukurannya biar muat di HP */
+        .photo-gallery {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        .photo-gallery img {
+            width: 120px; /* Diperkecil */
+            height: 160px; /* Diperkecil */
+            object-fit: cover;
+            border: 3px solid black;
+            border-radius: 8px;
+            box-shadow: 3px 3px 0px black;
+        }
+
+        #reaction-text { font-size: 18px; font-weight: bold; margin: 10px 0 5px 0; }
+        #attempts-text { font-size: 14px; font-weight: bold; margin-bottom: 10px; }
+        #dare-text { font-size: 14px; font-weight: bold; margin-top: 15px; }
+
+        .message-box {
+            font-size: 14px;
+            line-height: 1.4;
+            margin-top: 15px;
+            padding: 0 5px;
+            text-align: justify;
+        }
+
+        #screen2, #screen3, #screen4 { display: none; width: 100%; flex-direction: column; align-items: center; }
+
+        /* ================== EFEK BACKGROUND ================== */
+        .floating-emoticon {
+            position: fixed; font-size: 30px; color: #ffb3cc; opacity: 0.3; z-index: 1;
+            animation: spinInPlace linear infinite, bobUpAndDown ease-in-out infinite; --dir: 1; 
+        }
+        @keyframes spinInPlace { 0% { transform: rotate(0deg); } 100% { transform: rotate(calc(360deg * var(--dir))); } }
+        @keyframes bobUpAndDown { 0%, 100% { margin-top: 0px; } 50% { margin-top: -20px; } }
+
+        #confetti-container, #raining-hearts-container {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5;
+        }
+
+        .confetti-piece { position: absolute; width: 8px; height: 16px; animation: confettiFall linear infinite; }
+        @keyframes confettiFall { 0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; } 100% { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
+
+        .rain-heart { position: absolute; font-size: 20px; color: #ff3366; animation: heartFall linear infinite; }
+        @keyframes heartFall { 0% { transform: translateY(-10vh) scale(0.5) rotate(0deg); opacity: 0.8; } 100% { transform: translateY(110vh) scale(1.2) rotate(360deg); opacity: 0; } }
+
+        /* REVISI: Media query buat balikin ukuran gede di PC */
+        @media (min-width: 600px) {
+            .container { padding: 40px; max-width: 500px; box-shadow: 8px 8px 0px black; }
+            h1 { font-size: 32px; }
+            .btn { font-size: 20px; padding: 10px 30px; }
+            .cat-img { width: 180px; height: 180px; }
+            .photo-gallery img { width: 150px; height: 200px; }
+            .message-box { font-size: 16px; padding: 0 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="floating-bg">
+        <div class="floating-emoticon bg-emot" style="left: 10%; top: 15%; animation-duration: 8s, 4s; --dir: 1;">❤️</div>
+        <div class="floating-emoticon bg-emot" style="left: 85%; top: 20%; animation-duration: 6s, 5s; --dir: -1;">❤️</div>
+        <div class="floating-emoticon bg-emot" style="left: 20%; top: 75%; animation-duration: 9s, 6s; --dir: 1;">❤️</div>
+        <div class="floating-emoticon bg-emot" style="left: 75%; top: 80%; animation-duration: 7s, 4.5s; --dir: -1;">❤️</div>
+        <div class="floating-emoticon bg-emot" style="left: 45%; top: 10%; animation-duration: 10s, 7s; --dir: 1;">❤️</div>
+        <div class="floating-emoticon bg-emot" style="left: 5%; top: 50%; animation-duration: 12s, 5.5s; --dir: -1;">❤️</div>
+        <div class="floating-emoticon bg-emot" style="left: 90%; top: 55%; animation-duration: 5s, 3.5s; --dir: 1;">❤️</div>
+        <div class="floating-emoticon bg-emot" style="left: 35%; top: 85%; animation-duration: 8.5s, 5s; --dir: -1;">❤️</div>
+        <div class="floating-emoticon bg-emot" style="left: 60%; top: 88%; animation-duration: 11s, 6.5s; --dir: 1;">❤️</div>
+    </div>
+
+    <div id="confetti-container"></div>
+    <div id="raining-hearts-container"></div>
+
+    <div id="app-container">
+        <!-- HALAMAN 1 -->
+        <div class="container" id="screen1">
+            <h1 style="text-shadow: none;">Acaaa, I want to ask you something...</h1>
+            <button class="btn" id="btnProceedFirst" onclick="nextScreen()">Proceed</button>
+        </div>
+
+        <!-- HALAMAN 2 -->
+        <div id="screen2-wrapper" style="display: none; width: 100%; align-items: center; flex-direction: column;">
+            <div id="reaction-container">
+                <img id="cat-img" class="cat-img" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRY8FWSdbF4TrI3fr6rn_wgBQumXG_OVyOlnbpjt3JU8Q&s=10" alt="cat meme">
+                <p id="reaction-text">Are you sure?</p>
+                <p id="attempts-text">Attempts: 1</p>
+            </div>
+
+            <div class="container" id="main-card">
+                <h1>Will You<br>Forgive Me?</h1>
+                <div class="button-group" id="btn-group">
+                    <button class="btn" id="btnYes" onclick="sayYes()">Yes</button>
+                    <button class="btn" id="btnNo" onclick="handleNo()">No</button>
+                </div>
+                <p id="dare-text">Try clicking No... if you dare</p>
+            </div>
+        </div>
+
+        <!-- HALAMAN 3 -->
+        <div class="container pop-up" id="screen3">
+            <h1>Yeyyy! I knew you would say yes! ❤️🥰</h1>
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTkvzNXE8R13U8Sj2uot0z5xGfa7aHA4QmEkXGRatSgAw&s=10" alt="happy cat" class="cat-img" style="margin-bottom: 20px;">
+            <p style="font-size: 16px; font-weight: bold; margin-bottom: 20px;">You can't resist this, babee!</p>
+            <button class="btn" id="btnProceed2" onclick="finalScreen()">Proceed</button>
+        </div>
+
+        <!-- HALAMAN 4 -->
+        <div class="container pop-up" id="screen4">
+            <h1 style="font-size: 22px;">Thank you for saying YES<br>❤️❤️❤️</h1>
+            <p style="font-weight: bold; margin-bottom: 10px; font-size: 14px;">MAKASIHHH ACAAA! Jangan marah lagiii ya :)</p>
+            
+            <div class="photo-gallery">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQP2rg31VtjdN1h7VSr_VgwlRfyWvMUFJqwTQ7sZ8GTfQ&s=10" alt="pic1">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSdbk9UtnYY0AXolhpTMQlQdpbBwr7LIGjsp7bO0C6tnw&s=10" alt="pic2">
+            </div>
+
+            <div class="message-box">
+                <b>💌 Special Message to you:</b><br>
+                You are the love of my life, and I'm so grateful to have you by my side. Every moment with you is a treasure I hold close to my heart. ❤️
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let noClickCount = 0;
+        const maxClicks = 10; 
+        const messages = ["Are you sure?", "Really sure?", "Think again!", "Last chance!", "Surely not?", "You might regret this!", "Give it another thought!", "Are you absolutely certain?", "This could be a mistake!", "Have a heart!"];
+        const catImages = [
+            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHnjTVg77VwbTqBABx7-CRX98zZ1XNMfXWFAb6_A_EdQ&s", 
+            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS0OEtyIfWhXfIBGm3_GAyqH6GKZ2Evh23IF6yqyFFlsg&s", 
+            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAY3g-QFKtrB76SNxs_alQcv0UzM2XOERQYrVGuH-llQ&s=10", 
+            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRDhZ6RwI2DxiqjOL-INDRvU9MTz8uG8hZNIA5yHNisvA&s=10", 
+            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQLBY5yKkhHJna3JOCjnkJEBmLFpV1f8UtuwwoyDoqGsw&s=10", 
+            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSh_673XCrGaBPGaS79cYhUavG0jSF3L9eUW8bRKe4Eqg&s=10", 
+            "https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcTjVHdVRLE0Xydd23CzNtCIBLp66_w-c2TDNgS_xCQQFYfJq6y7", 
+            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRY8FWSdbF4TrI3fr6rn_wgBQumXG_OVyOlnbpjt3JU8Q&s=10", 
+            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQQ9pRcpmNccK97-bJKNLxtrDsLP-uvzdp4bkdAwKsUAw&s=10"
+        ];
+
+        function createConfetti() {
+            const container = document.getElementById('confetti-container');
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffa500', '#ff69b4'];
+            for (let i = 0; i < 40; i++) {
+                let piece = document.createElement('div');
+                piece.classList.add('confetti-piece');
+                piece.style.left = Math.random() * 100 + '%';
+                piece.style.top = (Math.random() * 20 - 20) + 'vh'; 
+                piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                piece.style.width = (Math.random() * 8 + 4) + 'px';
+                piece.style.height = (Math.random() * 12 + 8) + 'px';
+                piece.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                piece.style.animationDelay = (Math.random() * 2) + 's';
+                container.appendChild(piece);
+            }
+        }
+
+        function createRainHearts() {
+            const container = document.getElementById('raining-hearts-container');
+            for (let i = 0; i < 30; i++) {
+                let heart = document.createElement('div');
+                heart.classList.add('rain-heart');
+                heart.innerText = '❤️';
+                heart.style.left = Math.random() * 100 + '%';
+                heart.style.top = (Math.random() * 20 - 20) + 'vh';
+                heart.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                heart.style.animationDelay = (Math.random() * 2) + 's';
+                heart.style.fontSize = (Math.random() * 15 + 10) + 'px';
+                container.appendChild(heart);
+            }
+        }
+
+        createConfetti();
+        createRainHearts();
+
+        function nextScreen() {
+            document.getElementById('screen1').style.display = 'none';
+            document.getElementById('screen2-wrapper').style.display = 'flex';
+
+            const emots = document.querySelectorAll('.bg-emot');
+            emots.forEach(emot => {
+                emot.innerText = Math.random() > 0.5 ? '💔' : '😭';
+                emot.style.color = ''; 
+                emot.style.opacity = '0.4'; 
+            });
+        }
+
+        function sayYes() {
+            // Sembunyikan overflow pada body saat popup muncul biar ga lompat (opsional, tp bagus)
+            document.body.style.overflow = 'hidden'; 
+            
+            document.getElementById('screen2-wrapper').style.display = 'none';
+            document.getElementById('floating-bg').style.display = 'none';
+            
+            document.getElementById('screen3').style.display = 'flex';
+            document.getElementById('confetti-container').style.display = 'block';
+        }
+
+        function finalScreen() {
+            // Aktifin lagi scrollnya pas di halaman terakhir yang panjang
+            document.body.style.overflowY = 'auto'; 
+
+            document.getElementById('screen3').style.display = 'none';
+            document.getElementById('confetti-container').style.display = 'none';
+
+            document.getElementById('screen4').style.display = 'flex';
+            document.getElementById('raining-hearts-container').style.display = 'block';
+        }
+
+        function handleNo() {
+            noClickCount++;
+            const reactionContainer = document.getElementById('reaction-container');
+            const catImg = document.getElementById('cat-img');
+            const reactionText = document.getElementById('reaction-text');
+            const attemptsText = document.getElementById('attempts-text');
+            const btnYes = document.getElementById('btnYes');
+            const btnNo = document.getElementById('btnNo');
+            const dareText = document.getElementById('dare-text');
+
+            if (noClickCount === 1) {
+                reactionContainer.style.display = 'block';
+                dareText.style.display = 'none';
+                btnYes.style.position = 'absolute';
+                btnYes.style.left = '50%';
+                btnYes.style.top = '50%';
+                btnYes.style.transform = 'translate(-50%, -50%)';
+            }
+
+            if (noClickCount >= maxClicks) {
+                catImg.src = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTXxhcD2_6zBA-iH5uB0abk5TiODXC01YODEBacr7PKuQ&s=10"; 
+                reactionText.innerText = "Sorry but you don't have a choice now";
+                attemptsText.innerText = `Attempts: ${noClickCount}`;
+                btnNo.style.display = 'none';
+                btnYes.style.fontSize = '40px';
+                btnYes.style.padding = '20px 40px';
+            } else {
+                attemptsText.innerText = `Attempts: ${noClickCount}`;
+                let msgIndex = (noClickCount - 1) % messages.length;
+                reactionText.innerText = messages[msgIndex];
+                let imgIndex = (noClickCount - 1) % catImages.length;
+                catImg.src = catImages[imgIndex];
+
+                let newYesSize = 18 + (noClickCount * 8);
+                let newYesPadding = 10 + (noClickCount * 2); 
+                btnYes.style.fontSize = newYesSize + 'px';
+                btnYes.style.padding = `${newYesPadding}px ${newYesPadding * 2}px`;
+
+                const maxX = window.innerWidth - btnNo.offsetWidth - 20;
+                const maxY = window.innerHeight - btnNo.offsetHeight - 20;
+                const randomX = Math.max(0, Math.floor(Math.random() * maxX));
+                const randomY = Math.max(0, Math.floor(Math.random() * maxY));
+                
+                btnNo.style.position = 'fixed';
+                btnNo.style.left = randomX + 'px';
+                btnNo.style.top = randomY + 'px';
+            }
+        }
+    </script>
+</body>
+</html>
